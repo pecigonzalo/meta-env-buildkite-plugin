@@ -4,7 +4,7 @@ set -x
 
 # Reads either a value or a list from plugin config
 function plugin_read_list() {
-  prefix_read_list "BUILDKITE_PLUGIN_MULTI_REPO_$1"
+  prefix_read_list "BUILDKITE_PLUGIN_META_ENV_$1"
 }
 
 # Reads either a value or a list from the given env prefix
@@ -25,32 +25,36 @@ function prefix_read_list() {
   fi
 }
 
-mapfile -t repos < <(plugin_read_list REPO)
+# Check agent meta-data exists
+function plugin_check_metadata_exists() {
+  buildkite-agent meta-data exists "$1"
+}
+
+# Read agent metadata for the plugin
+function plugin_get_metadata() {
+  buildkite-agent meta-data get "$1"
+}
+
+mapfile -t keys < <(plugin_read_list KEYS)
 
 # Only run if we have repos
-if [[ "${#repos[@]}" -gt 0 ]]; then
-  echo "--- Cloning additional repositories"
-  for r in "${repos[@]}"; do
-    if [[ $r =~ "=" ]]; then
+if [[ "${#keys[@]}" -gt 0 ]]; then
+  for key in "${keys[@]}"; do
+    if [[ $key =~ "=" ]]; then
       # This pattern matched should allow to correctly parse "this=that=t" as
-      # repo=this=that
-      # folder=t
-      repo="${r%"="*}"       # Remove from $r the shortest part of "=" that matches the back end of $r
-      folder="${r##*"="}"    # Remove from $r the longest part of "=" that matches the front end of $r
-      folder="${folder:-""}" # If no folder, use the local folder with the repo name
+      # key=this=that
+      # env=t
+      meta_key="${key%"="*}"              # Remove from $r the shortest part of "=" that matches the back end of $r
+      meta_env="${key##*"="}"             # Remove from $r the longest part of "=" that matches the front end of $r
+      meta_env="${meta_env:-${meta_key}}" # If no folder, use the local folder with the repo name
+      meta_env="${meta_env^^}"            # Uppercase
     else
-      repo="${r}"
-      folder=""
+      meta_key="${key}"
+      meta_env="${key^^}"
     fi
-
-    if [[ "${BUILDKITE_PLUGIN_MULTI_REPO_FAIL:-}" =~ true|1|on ]]; then
-      git clone -v -- "$repo" "$folder"
-    else
-      git clone -v -- "$repo" "$folder" ||
-        (
-          echo "^^^ +++"
-          echo "Some clone commands failed"
-        )
+    if plugin_check_metadata_exists "${meta_key}"; then
+      meta_content="$(plugin_get_metadata ${meta_key})"
+      export "${meta_env}"="${meta_content}"
     fi
   done
 fi

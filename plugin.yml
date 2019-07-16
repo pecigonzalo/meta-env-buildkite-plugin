@@ -1,13 +1,13 @@
-name: multi-repo
-description: Clones multiple github repositories
-author: https://github.com/buildkite
+name: meta-env
+description: Transposes meta-data to env vars
+author: https://github.com/pecigonzalo
 requirements: [
   "git",
 ]
 configuration:
   properties:
-    repos:
+    keys:
       type: [string, array]
   required:
-    - repos
+    - keys
   additionalProperties: false
