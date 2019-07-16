@@ -13,7 +13,7 @@ services:
 
   shellcheck:
     image: koalaman/shellcheck
-    command: ['--color=always', 'hooks/post-checkout']
+    command: ['--color=always', 'hooks/environment']
     volumes:
       - ".:/plugin"
     working_dir: /plugin

@@ -53,7 +53,7 @@ if [[ "${#keys[@]}" -gt 0 ]]; then
       meta_env="${key^^}"
     fi
     if plugin_check_metadata_exists "${meta_key}"; then
-      meta_content="$(plugin_get_metadata ${meta_key})"
+      meta_content="$(plugin_get_metadata "${meta_key}")"
       export "${meta_env}"="${meta_content}"
     fi
   done
